@@ -26,5 +26,5 @@ class DB():
         return self.db[username]
 
     def newDoc(self, doc):
-        self.db.create_document(doc)
-        return True
+        doc = self.db.create_document(doc)
+        return  doc.exists()
