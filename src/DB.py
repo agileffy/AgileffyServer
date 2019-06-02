@@ -1,4 +1,4 @@
-from cloudant import CouchDB
+from cloudant.client import CouchDB
 import config
 
 def connectClient():
@@ -25,11 +25,13 @@ class DB():
 
     def isExist(self, username):
         result = username in self.db
+        print('DEBUG:' + username + ' exists:' + str(result))
         return result
 
     def findDoc(self, username):
         return self.db[username]
 
-    def newDoc(self, doc):
-        doc = self.db.create_document(doc)
-        return  doc.exists()
+    def newDoc(self, data):
+        print(data)
+        doc = self.db.create_document(data)
+        return doc.exists()
