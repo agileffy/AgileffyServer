@@ -1,6 +1,5 @@
-import config
 from cloudant import CouchDB
-
+import config
 
 def connectClient():
     client = CouchDB(config.username, config.password, url=config.url,
