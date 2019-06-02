@@ -27,5 +27,5 @@ class DB():
         return self.db[username]
 
     def newDoc(self, doc):
-        # todo
+        self.db.create_document(doc)
         return True
