@@ -17,6 +17,11 @@ def initdb():
 class DB():
     def __init__(self):
         self.db = initdb()
+        if self.db.exists():
+            print('DEBUG:New DB!')
+        else:
+            print('DEBUG:Can not connect db')
+
 
     def isExist(self, username):
         result = username in self.db
