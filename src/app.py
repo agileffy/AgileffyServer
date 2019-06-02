@@ -1,8 +1,7 @@
 from flask import Flask, request, session, make_response
-import cloudant
+from cloudant import CouchDB
 import hashlib
-
-TIMEOUT=10 #fixme
+import config
 
 app = Flask(__name__)
 import os
@@ -15,35 +14,67 @@ def hello_world():
     return 'Hello World!'
 
 
-def find_in_database(username):#fixme
-    return False
+def findInDatabase(db, username):
+    result = username in db
+    return result
 
 
-def get_result_in_database(username):#fixme
-
-    return {}
-
-
-def insert_in_database(username, salt):#fixme
-    pass
+def getResultInDatabase(db, username):
+    return db[username]
 
 
-def update_in_database(username, md5):#fixme
-    pass
+def insertInDatabase(db, username, salt):
+    doc = db[username]
+    doc['salt'] = salt
 
 
-def initdb():
-    pass
+def updateInDatabase(db, username, md5):
+    doc = db[username]
+    doc['md5'] = md5
+
+
+def connectClient():
+    client = CouchDB(config.username, config.password, url=config.url,
+                     connect=True,
+                     auto_renew=True)
+    return client
+
+
+def initDB():
+    client = connectClient()
+
+    db = client[config.database]
+    return db
+
+
+def createDB():
+    client = connectClient()
+
+    if not client.exists():
+        print('ERROR:Can not connect client')
+        return False
+
+    db = client[config.database]
+
+    if not db.exists():
+        db = client.create_database(config.database)
+
+    if not db.exists():
+        print('ERROR:Can not create database')
+        return False
+
+    return True
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if not session.get('db'):
-        session['db']=initdb()
+        session['db']=initDB()
     if (not session.get('salt')) or request['new'] is True:
-        if not find_in_database(request['username']):
+        if not findInDatabase(session['db'], request['username']):
             session['salt'] = os.urandom(16)
             session['username']=request['username']
-            insert_in_database(session['username'], session['salt'])
+            insertInDatabase(session['db'], session['username'], session['salt'])
             response = make_response("OK")
             response.set_cookie('salt', str(session['salt']))
             response.set_cookie('username_check', 'true')
@@ -57,7 +88,7 @@ def register():
         md5 = request['md5']
         t = request['time']
         crypt = request['crypt']
-        if t < time.time() - TIMEOUT:
+        if t < time.time() - config.TIMEOUT:
             response = make_response("Timeout")
             response.set_cookie('time_check', 'false')
             response.set_cookie('hash_check', 'false')
@@ -70,7 +101,7 @@ def register():
             response.set_cookie('debug_new', 'false')
             return response
         else:
-            update_in_database(session['username'], request['md5'])
+            updateInDatabase(session['username'], request['md5'])
             response = make_response("OK")
             response.set_cookie('time_check', 'true')
             response.set_cookie('hash_check', 'true')
@@ -81,13 +112,13 @@ def register():
 @app.route('/login')
 def login():
     if (not session.get('salt')) or request['new'] is True:
-        if not find_in_database(request['username']):
+        if not findInDatabase(session['db'], session['username']):
             response = make_response("Invalid Username")
             response.set_cookie('username_check', 'false')
             response.set_cookie('debug_new', 'true')
             return response
         session['username']=request['username']
-        res = get_result_in_database(session['username'])
+        res = getResultInDatabase(session['db'], session['username'])
         response = make_response("OK")
         response.set_cookie('salt', str(res['salt']))
         response.set_cookie('username_check', 'true')
@@ -95,11 +126,11 @@ def login():
         session['salt'] = res['salt']
         return response
     else:
-        res = get_result_in_database(session['username'])
+        res = getResultInDatabase(session['db'], session['username'])
         t = request['time']
         crypt = request['crypt']
         md5 = res['md5']
-        if t < time.time() - TIMEOUT:
+        if t < time.time() - config.TIMEOUT:
             response = make_response("Timeout")
             response.set_cookie('time_check', 'false')
             response.set_cookie('password_check', 'false')
@@ -128,4 +159,5 @@ def init():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    if createDB():
+        app.run(debug=True)
