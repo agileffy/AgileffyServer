@@ -1,6 +1,7 @@
 from cloudant.client import CouchDB
 import config
 
+
 def connectClient():
     client = CouchDB(config.username, config.password, url=config.url,
                      connect=True,
@@ -21,7 +22,6 @@ class DB():
             print('DEBUG:New DB!')
         else:
             print('DEBUG:Can not connect db')
-
 
     def isExist(self, username):
         result = username in self.db
