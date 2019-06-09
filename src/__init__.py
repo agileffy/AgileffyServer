@@ -16,6 +16,7 @@ app.run(
     host='0.0.0.0',
     port=443,
     debug=True,
-    ssl_context=('your_path/XXXX.pem', 'your_path/XXXX.key'))
+    ssl_context=('/root/agileffy.info.crt',
+                 '/root/agileffy.info.key'))
 
 

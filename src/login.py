@@ -8,6 +8,8 @@ import json
 
 @app.route('/api/login', methods=['POST'])
 def login():
+    print(request.data)
+    print(request.data.decode())
     data = json.loads(request.data.decode())
     db = DB()
     if not db.isExist(data['username']):
