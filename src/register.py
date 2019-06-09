@@ -10,7 +10,10 @@ import json
 @app.route('/api/register', methods=['POST'])
 def register():
     db = DB()
+    print(request.data)
+    print(request.data.decode())
     data = json.loads(request.data.decode())
+    print(data)
     if not db.isExist(data['username']):
         username=data['username']
         salt=os.urandom(16)
